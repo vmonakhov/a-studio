@@ -4,7 +4,8 @@ import logging
 import queue
 import sqlite3
 import time
-from multiprocessing import Process, Queue
+from torch.multiprocessing import Process, Queue, get_context
+#set_start_method('spawn')
 
 import constants as con
 import matplotlib
@@ -17,6 +18,7 @@ matplotlib.use("Agg")
 
 FINISH_PROCESS = "finish_process"
 
+spawn_context = get_context('spawn')
 
 class AlignmentProcessor:
     """Processor with parallel texts alignment logic"""
@@ -40,9 +42,11 @@ class AlignmentProcessor:
         use_proxy_from=False,
         use_proxy_to=False,
     ):
+        #set_start_method('spawn', force=True)
+
         self.proc_count = proc_count
-        self.queue_in = Queue()
-        self.queue_out = Queue()
+        self.queue_in = spawn_context.Queue()
+        self.queue_out = spawn_context.Queue()
         self.db_path = db_path
         self.user_db_path = user_db_path
         self.res_img_best = res_img_best
@@ -69,6 +73,9 @@ class AlignmentProcessor:
         self.tasks_count = len(task_list)
 
     def work(self, queue_in, queue_out):
+
+        logging.info(f">>>>> Creating separate alignment processes.")
+
         """Create separate alignment processes"""
         while True:
             try:
@@ -100,6 +107,10 @@ class AlignmentProcessor:
         counter = 0
         error_occured = False
         result = []
+        
+        #set_start_method('spawn', force=True)
+
+        logging.info(f">>>>> Incrementing alignment state.")
 
         while counter < self.tasks_count:
             (
@@ -129,6 +140,8 @@ class AlignmentProcessor:
 
             counter += 1
 
+        logging.info(f">>>>> Starting writing")
+        
         # sort by batch_id
         result.sort()
         with sqlite3.connect(self.db_path) as db:
@@ -175,11 +188,20 @@ class AlignmentProcessor:
             print("finishing with error")
 
     def start_align(self):
+
         """Start workers"""
+        
+        logging.info(f">>>>> Initializing {min(self.proc_count, self.tasks_count)} worker(s).")
+        
+        '''
         workers = [
-            Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True)
+            spawn_context.Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True)
             for _ in range(min(self.proc_count, self.tasks_count))
         ]  # do not run more processes than necessary
+
+
+        logging.info(f">>>>> Starting workers.")
+        
         for w in workers:
             w.start()
 
@@ -188,11 +210,21 @@ class AlignmentProcessor:
         #     target=self.handle_result, args=(self.queue_out,), daemon=True
         # )
         # align_handler.start()
-
+        
+        logging.info(f">>>>> ?Starting processes?")
+        
+        
         # docker
-        align_handler = Process(target=self.handle_result, args=(self.queue_out,))
+        align_handler = spawn_context.Process(target=self.handle_result, args=(self.queue_out,))
         align_handler.start()
         align_handler.join()
+
+        logging.info(f">>>>> !Started processes!")
+        '''
+
+        #set_start_method('spawn', force=True)
+        self.work(self.queue_in, self.queue_out)
+        self.handle_result(self.queue_out)
 
     def process_batch_wrapper(
         self,
@@ -208,6 +240,8 @@ class AlignmentProcessor:
     ):
         """Align process wrapper"""
         logging.info(f"Alignment started for {self.db_path}.")
+
+        #set_start_method('spawn', force=True)
 
         try:
             texts_from, texts_to = aligner.process_batch(
@@ -242,17 +276,23 @@ class AlignmentProcessor:
 
     def start_resolve(self):
         """Start resolve workers"""
-        resolve_handler = Process(
+
+        self.handle_resolve(self.queue_out)
+        self.work(self.queue_in, self.queue_out)
+        
+        '''
+        resolve_handler = spawn_context.Process(
             target=self.handle_resolve, args=(self.queue_out,), daemon=True
         )
         resolve_handler.start()
 
         workers = [
-            Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True)
+            spawn_context.Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True)
             for _ in range(min(self.proc_count, self.tasks_count))
         ]  # do not run more processes than necessary
         for w in workers:
             w.start()
+        '''
 
     def resolve_batch_wrapper(
         self, batch_id, batch_amount, handle_start, handle_finish

@@ -1,5 +1,5 @@
 //DEV
-export const API_URL = "http://localhost/";
+export const API_URL = "http://10.100.194.95:8081/";
 
 // export const API_URL = "/";
 export const DEFAULT_BATCHSIZE = 200;
