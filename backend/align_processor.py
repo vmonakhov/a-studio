@@ -4,7 +4,8 @@ import logging
 import queue
 import sqlite3
 import time
-from torch.multiprocessing import Process, Queue, get_context
+import torch
+from torch.multiprocessing import Process, Queue, get_context, get_start_method, set_start_method
 #set_start_method('spawn')
 
 import constants as con
@@ -42,7 +43,6 @@ class AlignmentProcessor:
         use_proxy_from=False,
         use_proxy_to=False,
     ):
-        #set_start_method('spawn', force=True)
 
         self.proc_count = proc_count
         self.queue_in = spawn_context.Queue()
@@ -75,7 +75,14 @@ class AlignmentProcessor:
     def work(self, queue_in, queue_out):
 
         logging.info(f">>>>> Creating separate alignment processes.")
-
+        
+        #print(f">>>>> {torch.cuda.is_initialized()=}")
+        #print(f">>>>> {torch._C._cuda_isInBadFork()=}")
+        #print(f">>>>> {set_start_method('spawn', force=True)=}")
+        #print(f">>>>> {get_start_method()=}")
+        #print(f">>>>> {torch.cuda.init()=}")
+        #print(f">>>>> {torch.zeros(1).cuda()=}")
+        
         """Create separate alignment processes"""
         while True:
             try:
@@ -221,7 +228,6 @@ class AlignmentProcessor:
 
         logging.info(f">>>>> !Started processes!")
         '''
-
         #set_start_method('spawn', force=True)
         self.work(self.queue_in, self.queue_out)
         self.handle_result(self.queue_out)
@@ -277,8 +283,8 @@ class AlignmentProcessor:
     def start_resolve(self):
         """Start resolve workers"""
 
-        self.handle_resolve(self.queue_out)
         self.work(self.queue_in, self.queue_out)
+        self.handle_resolve(self.queue_out)
         
         '''
         resolve_handler = spawn_context.Process(

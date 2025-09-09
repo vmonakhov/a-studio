@@ -37,7 +37,7 @@ CORS(app)
 
 import os
 
-#from torch.multiprocessing import get_start_method
+from torch.multiprocessing import set_start_method
 #logging.info(f'>>>>> {get_start_method()}')
 
 # os.environ["MODEL_NAME"] = "lingtrain/labse-udmurt"
@@ -552,6 +552,9 @@ def update_visualization(username):
 @app.route("/items/<username>/alignment/align", methods=["POST"])
 def start_alignment(username):
     """Align two splitted documents"""
+
+    print(f">>>>> {set_start_method('spawn', force=True)=}")
+
     align_guid = request.form.get("id", "")
     align_all = request.form.get("align_all", "")
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
@@ -672,6 +675,9 @@ def start_alignment(username):
 @app.route("/items/<username>/alignment/align/next", methods=["POST"])
 def align_next_batch(username):
     print(f'>>>>>>>>>>> start_alignment')
+
+    print(f">>>>> {set_start_method('spawn', force=True)=}")
+
     """Align next batch of two splitted documents"""
     align_guid = request.form.get("id", "")
     amount, _ = misc.try_parse_int(request.form.get("amount", 1))
