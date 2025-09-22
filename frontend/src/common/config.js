@@ -1,3 +1,7 @@
+
+//Subpath for deploy
+export const base = process.env.BASE_URL;
+
 //DEV
 export const API_URL = "http://10.100.194.95:8081/";
 

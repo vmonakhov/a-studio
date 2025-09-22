@@ -1,12 +1,6 @@
 module.exports = {
   transpileDependencies: ["vuetify"],
-  devServer: {
-    proxy: {
-      '^/js': {
-        target: 'http://10.100.194.95:8080'
-      }
-    }
-  },
+  publicPath: '/lingtrain_aligner/', //subpath for deploy
   css: {
     loaderOptions: {
       sass: {
