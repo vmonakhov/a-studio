@@ -199,8 +199,7 @@ class AlignmentProcessor:
         """Start workers"""
         
         logging.info(f">>>>> Initializing {min(self.proc_count, self.tasks_count)} worker(s).")
-        
-        '''
+
         workers = [
             spawn_context.Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True)
             for _ in range(min(self.proc_count, self.tasks_count))
@@ -227,7 +226,7 @@ class AlignmentProcessor:
         align_handler.join()
 
         logging.info(f">>>>> !Started processes!")
-        '''
+
         #set_start_method('spawn', force=True)
         self.work(self.queue_in, self.queue_out)
         self.handle_result(self.queue_out)
@@ -285,8 +284,7 @@ class AlignmentProcessor:
 
         self.work(self.queue_in, self.queue_out)
         self.handle_resolve(self.queue_out)
-        
-        '''
+
         resolve_handler = spawn_context.Process(
             target=self.handle_resolve, args=(self.queue_out,), daemon=True
         )
@@ -298,7 +296,6 @@ class AlignmentProcessor:
         ]  # do not run more processes than necessary
         for w in workers:
             w.start()
-        '''
 
     def resolve_batch_wrapper(
         self, batch_id, batch_amount, handle_start, handle_finish
