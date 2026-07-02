@@ -37,9 +37,6 @@ CORS(app)
 
 import os
 
-from torch.multiprocessing import set_start_method
-#logging.info(f'>>>>> {get_start_method()}')
-
 # os.environ["MODEL_NAME"] = "lingtrain/labse-udmurt"
 # os.environ["MODEL_NAME"] = "udmurtNLP/labse-udm-eng"
 
@@ -552,9 +549,6 @@ def update_visualization(username):
 @app.route("/items/<username>/alignment/align", methods=["POST"])
 def start_alignment(username):
     """Align two splitted documents"""
-
-    print(f">>>>> {set_start_method('spawn', force=True)=}")
-
     align_guid = request.form.get("id", "")
     align_all = request.form.get("align_all", "")
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
@@ -562,8 +556,6 @@ def start_alignment(username):
     window, _ = misc.try_parse_int(request.form.get("window", config.DEFAULT_WINDOW))
     use_proxy_from = True if request.form.get("use_proxy_from", "") == "true" else False
     use_proxy_to = True if request.form.get("use_proxy_to", "") == "true" else False
-
-    print(f'>>>>>>>>>>> start_alignment')
 
     logging.info(
         f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}, batch_shift {batch_shift}"
@@ -674,10 +666,6 @@ def start_alignment(username):
 
 @app.route("/items/<username>/alignment/align/next", methods=["POST"])
 def align_next_batch(username):
-    print(f'>>>>>>>>>>> start_alignment')
-
-    print(f">>>>> {set_start_method('spawn', force=True)=}")
-
     """Align next batch of two splitted documents"""
     align_guid = request.form.get("id", "")
     amount, _ = misc.try_parse_int(request.form.get("amount", 1))
@@ -762,8 +750,6 @@ def align_next_batch(username):
 
     proc_count = config.PROCESSORS_COUNT
 
-    logging.info(f"[{username}]. >>>>> Initializing AlignmentProcessor.")
-
     proc = AlignmentProcessor(
         proc_count,
         db_path,
@@ -781,18 +767,9 @@ def align_next_batch(username):
         use_proxy_from=use_proxy_from,
         use_proxy_to=use_proxy_to,
     )
-
-
-    logging.info(f"[{username}]. >>>>> Adding tasks.")
-
     proc.add_tasks(task_list)
-    
-    logging.info(f"[{username}]. >>>>> ?Starting alignment?")
-    
     proc.start_align()
-    
-    logging.info(f"[{username}]. >>>>> !Started alignment!")
-    
+
     return con.EMPTY_LINES
 
 
