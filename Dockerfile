@@ -36,4 +36,7 @@ COPY ./backend /app
 #copy release config
 COPY ./release/config.py /app
 
-COPY --from=build-stage /app/dist /app/static
+COPY --from=build-stage /app/dist /app/static/lingtrain_aligner
+RUN mv /app/static/lingtrain_aligner/index.html /app/static
+
+RUN apt update && apt install -y vim w3m

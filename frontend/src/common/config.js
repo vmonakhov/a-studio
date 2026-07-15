@@ -1,6 +1,7 @@
 
 //Subpath for deploy
-export const base = process.env.BASE_URL;
+//export const base = process.env.BASE_URL;
+export const base = "/";
 
 //DEV
 //export const API_URL = "http://localhost/";
